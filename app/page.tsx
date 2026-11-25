@@ -29,13 +29,23 @@ export default function HomePage() {
     else { setPosts((data || []) as unknown as Post[]); setMessage(""); }
   }
 
-  useEffect(() => {
+ useEffect(() => {
     load();
-    if (!supabase) return;
-    const { data: listener } = supabase.auth.onAuthStateChange(() => load());
-    const channel = supabase.channel("public-post-updates").on("postgres_changes",
-      { event: "*", schema: "public", table: "posts" }, () => load()).subscribe();
-    supabase?.removeChannel(channel);
+    const client = supabase;
+    if (!client) return;
+
+    const { data: listener } = client.auth.onAuthStateChange(() => load());
+
+    const channel = client.channel("public-post-updates")
+      .on("postgres_changes",
+        { event: "*", schema: "public", table: "posts" },
+        () => load())
+      .subscribe();
+
+    return () => {
+      listener.subscription.unsubscribe();
+      void client.removeChannel(channel);
+    };
   }, []);
 
   async function createPost(e: React.FormEvent) {
