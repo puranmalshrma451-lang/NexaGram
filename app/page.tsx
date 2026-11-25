@@ -35,7 +35,7 @@ export default function HomePage() {
     const { data: listener } = supabase.auth.onAuthStateChange(() => load());
     const channel = supabase.channel("public-post-updates").on("postgres_changes",
       { event: "*", schema: "public", table: "posts" }, () => load()).subscribe();
-    return () => { listener.subscription.unsubscribe(); supabase.removeChannel(channel); };
+    supabase?.removeChannel(channel);
   }, []);
 
   async function createPost(e: React.FormEvent) {
